@@ -74,7 +74,7 @@ class StripeSource extends DataSource {
 	public function create($model, $fields = array(), $values = array()) {
 		$request = array(
 			'uri' => array(
-				'path' => $model->path
+				'path' => $this->_addIdToPath($model->path)
 			),
 			'method' => 'POST',
 			'body' => $this->reformat($model, array_combine($fields, $values))
@@ -105,7 +105,7 @@ class StripeSource extends DataSource {
 		}
 		$request = array(
 			'uri' => array(
-				'path' => trim($model->path, '/').'/'.$queryData['conditions'][$model->alias.'.'.$model->primaryKey]
+				'path' => $this->_addIdToPath($model->path, $queryData['conditions'][$model->alias.'.'.$model->primaryKey])
 			)
 		);
 		$response = $this->request($request);
@@ -137,7 +137,7 @@ class StripeSource extends DataSource {
 		unset($data['id']);
 		$request = array(
 			'uri' => array(
-				'path' => trim($model->path, '/').'/'.$id
+				'path' => $this->_addIdToPath($model->path, $id)
 			),
 			'method' => 'POST',
 			'body' => $this->reformat($model, $data)
@@ -161,7 +161,7 @@ class StripeSource extends DataSource {
 	public function delete($model, $id = null) {
 		$request = array(
 			'uri' => array(
-				'path' => trim($model->path, '/').'/'.$id[$model->alias.'.'.$model->primaryKey]
+				'path' => $this->_addIdToPath($model->path, $id[$model->alias.'.'.$model->primaryKey])
 			),
 			'method' => 'DELETE'
 		);
@@ -237,6 +237,25 @@ class StripeSource extends DataSource {
 			}
 		}
 		return $data;
+	}
+
+/**
+ * Replaces {id} in the path with the actual id
+ *
+ * Appends {id} to the end path, if it is not currently in the path
+ *
+ * This allows you to put the id in the middle of the path, such as:
+ * /customers/{id}/subscription
+ *
+ * @param string $path Path
+ * @param string $id ID (optional)
+ */
+	protected function _addIdToPath($path, $id = '') {
+		if ($id && !stristr($path, '{id}')) {
+			$path .= '/{id}';
+		}
+		$path = str_replace(array('{ID}', '{id}'), $id, $path);
+		return $path;
 	}
 
 /**
