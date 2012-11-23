@@ -35,15 +35,15 @@ class StripeSource extends DataSource {
 
 /**
  * Start quote
- * 
- * @var string 
+ *
+ * @var string
  */
 	public $startQuote = '';
 
 /**
  * End quote
- * 
- * @var string 
+ *
+ * @var string
  */
 	public $endQuote = '';
 
@@ -59,7 +59,7 @@ class StripeSource extends DataSource {
 		if (empty($config['api_key'])) {
 			throw new CakeException('StripeSource: Missing api key');
 		}
-		
+
 		$this->Http = new HttpSocket();
 	}
 
