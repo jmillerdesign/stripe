@@ -71,7 +71,7 @@ class StripeSource extends DataSource {
  * @param array $values Array of field values
  * @return boolean Success
  */
-	public function create($model, $fields = array(), $values = array()) {
+	public function create(Model $model, $fields = null, $values = null) {
 		$request = array(
 			'uri' => array(
 				'path' => $this->_addIdToPath($model->path)
@@ -91,31 +91,33 @@ class StripeSource extends DataSource {
 /**
  * Reads a Stripe record
  *
- * @param Model $model The calling model
- * @param array $queryData Query data (conditions, limit, etc)
- * @return mixed `false` on failure, data on success
+ * @param Model $Model Model Instance
+ * @param array $query Query data
+ * @param mixed  $recursive
+ * @return array Results
+ * @access public
  */
-	public function read($model, $queryData = array()) {
+	public function read(Model $Model, $query = array(), $recursive = null) {
 		// If calculate() wants to know if the record exists. Say yes.
-		if ($queryData['fields'] == 'COUNT') {
+		if ($query['fields'] == 'COUNT') {
 			return array(array(array('count' => 1)));
 		}
-		if (empty($queryData['conditions'][$model->alias.'.'.$model->primaryKey])) {
-			$queryData['conditions'][$model->alias.'.'.$model->primaryKey] = $model->id;
+		if (empty($query['conditions'][$Model->alias.'.'.$Model->primaryKey])) {
+			$query['conditions'][$Model->alias.'.'.$Model->primaryKey] = $Model->id;
 		}
 		$request = array(
 			'uri' => array(
-				'path' => $this->_addIdToPath($model->path, $queryData['conditions'][$model->alias.'.'.$model->primaryKey])
+				'path' => $this->_addIdToPath($Model->path, $query['conditions'][$Model->alias.'.'.$Model->primaryKey])
 			)
 		);
 		$response = $this->request($request);
 		if ($response === false) {
 			return false;
 		}
-		$model->id = $response['id'];
+		$Model->id = $response['id'];
 		return array(
 			array(
-				$model->alias => $response
+				$Model->alias => $response
 			)
 		);
 	}
@@ -123,12 +125,13 @@ class StripeSource extends DataSource {
 /**
  * Updates a Stripe record
  *
- * @param Model $model The calling model
- * @param array $fields Array of fields to update
- * @param array $values Array of field values
- * @return mixed `false` on failure, data on success
+ * @param Model $Model Model Instance
+ * @param array $fields Field data
+ * @param array $values Save data
+ * @return boolean Update result
+ * @access public
  */
-	public function update($model, $fields = array(), $values = array()) {
+	public function update(Model $Model, $fields = null, $values = null, $conditions = null) {
 		$data = array_combine($fields, $values);
 		if (!isset($data['id'])) {
 			$data['id'] = $model->id;
@@ -154,11 +157,12 @@ class StripeSource extends DataSource {
 /**
  * Deletes a Stripe record
  *
- * @param Model $model The calling model
- * @param integer $id Id to delete
- * @return boolean Success
+ * @param Model $Model Model Instance
+ * @param array $conditions
+ * @return boolean Update result
+ * @access public
  */
-	public function delete($model, $id = null) {
+	public function delete(Model $Model, $conditions = null) {
 		$request = array(
 			'uri' => array(
 				'path' => $this->_addIdToPath($model->path, $id[$model->alias.'.'.$model->primaryKey])
@@ -272,19 +276,20 @@ class StripeSource extends DataSource {
 /**
  * Don't use internal caching
  *
+ * @param mixed $data
  * @return null
  */
-	public function listSources() {
+	public function listSources($data = null) {
 		return null;
 	}
 
 /**
- * Descibe with schema. Check the model or use nothing.
+ * Returns a Model description (metadata) or null if none found.
  *
- * @param Model $Model
- * @return array
+ * @param Model|string $model
+ * @return array Array of Metadata for the $model
  */
-	public function describe(Model $Model) {
+	public function describe($model) {
 		if (isset($Model->_schema)) {
 			return $Model->_schema;
 		} else {
